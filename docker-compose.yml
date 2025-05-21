@@ -1,0 +1,62 @@
+services:
+
+  dbmysql:
+    container_name: servidor_maria
+    image: mariadb:11.4
+    restart: always
+    expose:
+      - 3306
+    ports:
+      - 2002:3306
+    env_file:
+      - ./conf_docker/db/.env_db
+    volumes:
+      - ./volumenes/basedatos:/var/lib/mysql
+      - ./conf_docker/db/my.cnf:/etc/mysql/my.cnf
+    command: --max_allowed_packet=1073741824
+
+
+  apache:
+    build: .
+    container_name: servidor_apache
+    restart: always
+    volumes:
+      - ./public:/var/www/html/
+      - ./src:/var/www/src
+      - ./conf_docker/apache/custom.ini:/usr/local/etc/php/conf.d/custom.ini
+      - ./volumenes/logs/apache:/var/log/apache2/
+    environment:
+      - LANG=es_ES.UTF-8
+      - LANGUAGE=es_ES:es
+      - LC_ALL=es_ES.UTF-8
+    expose:
+      - 80
+    ports:
+      - 2000:80
+    links:
+      - dbmysql
+
+
+  redis:
+    image: redis:8.0
+    container_name: servidor_redis
+    restart: always
+    ports:
+      - 2003:6379
+    volumes:
+      - ./volumenes/redis:/data
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: servidor_phpmyadmin
+    restart: always
+    env_file:
+      - ./conf_docker/phpmyadmin/.env_pma_root
+    expose:
+      - 80
+    ports:
+      - 2001:80
+    depends_on:
+      - dbmysql
+    links:
+      - dbmysql
