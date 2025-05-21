@@ -13,6 +13,7 @@ services:
     volumes:
       - ./volumenes/basedatos:/var/lib/mysql
       - ./conf_docker/db/my.cnf:/etc/mysql/my.cnf
+      - ./conf_docker/db/init:/docker-entrypoint-initdb.d
     command: --max_allowed_packet=1073741824
 
 
@@ -25,6 +26,10 @@ services:
       - ./src:/var/www/src
       - ./conf_docker/apache/custom.ini:/usr/local/etc/php/conf.d/custom.ini
       - ./volumenes/logs/apache:/var/log/apache2/
+      - ./composer.json:/var/www/composer.json
+      - ./vendor:/var/www/vendor
+      - ./phpunit.xml:/var/www/phpunit.xml
+      - ./.env:/var/www/.env
     environment:
       - LANG=es_ES.UTF-8
       - LANGUAGE=es_ES:es
@@ -58,5 +63,24 @@ services:
       - 2001:80
     depends_on:
       - dbmysql
+    links:
+      - dbmysql
+
+  apacheinterfaz:
+    build: .
+    container_name: servidor_apache_interfaz
+    restart: always
+    volumes:
+      - ./public_interfaz:/var/www/html/
+      - ./conf_docker/apache/custom.ini:/usr/local/etc/php/conf.d/custom.ini
+      - ./volumenes/logs/apache_interfaz:/var/log/apache2/
+    environment:
+      - LANG=es_ES.UTF-8
+      - LANGUAGE=es_ES:es
+      - LC_ALL=es_ES.UTF-8
+    expose:
+      - 80
+    ports:
+      - 2004:80
     links:
       - dbmysql
